@@ -6,7 +6,7 @@
 <title>Consultoria Cirúrgica | Dra. Beatriz Ribas</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- Meta Pixel: dataset "CRM Kommo - Dra Beatriz Ribas" (o mesmo que recebe o LeadQuente da Ponte) -->
 <script>
@@ -20,62 +20,65 @@ fbq('track', 'PageView');
 </script>
 
 <style>
-/* Identidade do site drabeatrizribasplastica.com.br */
+/* Identidade do site drabeatrizribasplastica.com.br, direção "Porcelana" (clara) */
 :root{
-  --bg:#14181c; --ink:#edf1f5; --muted:#a8b5c0; --line:rgba(237,241,245,.18);
-  --accent:#8fc4e8; --accent-ink:#0f1317; --opt:rgba(255,255,255,.06); --opt-hover:rgba(143,196,232,.14);
-  --error:#ff9b8f;
+  --bg:#F1F2F5; --ink:#1B1D21; --muted:#5F636B; --line:#D9DCE2;
+  --accent:#1F5E8F; --accent-ink:#FFFFFF; --opt:#FFFFFF; --opt-hover:#E7F0F7;
+  --error:#B3261E;
   --photo:url('/images/hero-dra-beatriz.webp');
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Geist","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;letter-spacing:-.011em;-webkit-font-smoothing:antialiased}
 
 .stage{position:relative;min-height:100vh;display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
-.stage::before{content:"";position:absolute;inset:-30px;background:var(--photo) center 20%/cover no-repeat;filter:blur(14px) brightness(.45);z-index:-2}
-.stage::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,24,28,.55),rgba(20,24,28,.85));z-index:-1}
+/* página avulsa: a foto aparece só como um véu muito suave */
+.stage::before{content:"";position:absolute;inset:-40px;background:var(--photo) center 20%/cover no-repeat;filter:blur(40px) saturate(.8);opacity:.35;z-index:-2}
+.stage::after{content:"";position:absolute;inset:0;background:rgba(241,242,245,.82);z-index:-1}
 
-.top{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0}
-.brand{font-family:"Instrument Serif",serif;font-size:22px;line-height:1}
-.brand small{display:block;font-family:"DM Sans",sans-serif;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:4px}
-.count{font-size:13px;color:var(--muted);letter-spacing:.06em}
-.progress{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08)}
-.progress span{display:block;height:100%;width:0;background:var(--accent);transition:width .35s}
+.top{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 0}
+.brand{font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.brand small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:2px;letter-spacing:-.01em}
+.count{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.progress{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(0,0,0,.05)}
+.progress span{display:block;height:100%;width:0;background:var(--accent);border-radius:0 3px 3px 0;transition:width .4s cubic-bezier(.25,.1,.25,1)}
 
 form{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
 .step{display:none;width:100%;max-width:600px}
-.step.on{display:block;animation:up .35s ease}
-@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.step.on{display:block;animation:up .4s cubic-bezier(.25,.1,.25,1)}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
-.eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;display:flex;gap:10px;align-items:center}
-.eyebrow::before{content:"";width:28px;height:1px;background:var(--accent)}
-h1,h2{font-family:"Instrument Serif",serif;font-weight:400;margin:0 0 18px;line-height:1.08}
-h1{font-size:clamp(34px,6vw,52px)}
-h1 em,h2 em{color:var(--accent)}
-h2{font-size:clamp(28px,4.6vw,40px)}
-.qn{font-family:"DM Sans",sans-serif;font-size:14px;color:var(--accent);margin-right:8px;vertical-align:middle}
+.eyebrow{font-size:15px;font-weight:500;color:var(--accent);margin:0 0 12px}
+h1,h2{font-weight:650;margin:0 0 18px;line-height:1.1;letter-spacing:-.03em;text-wrap:balance}
+h1{font-size:clamp(32px,5.6vw,48px)}
+h1 em,h2 em{font-style:normal;color:inherit}
+h2{font-size:clamp(24px,3.8vw,32px)}
+.qn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:600;margin-right:12px;vertical-align:4px;letter-spacing:0}
 p.sub{color:var(--muted);margin:0 0 26px;max-width:520px}
 ul.bul{list-style:none;padding:0;margin:0 0 26px}
-ul.bul li{padding-left:22px;position:relative;margin-bottom:8px;color:var(--ink)}
-ul.bul li::before{content:"";position:absolute;left:0;top:.7em;width:10px;height:1px;background:var(--accent)}
+ul.bul li{padding-left:28px;position:relative;margin-bottom:10px}
+ul.bul li::before{content:"";position:absolute;left:2px;top:.45em;width:12px;height:6px;border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
 
 .opts{display:flex;flex-direction:column;gap:10px;margin-bottom:26px}
-.opt{display:flex;align-items:center;gap:14px;border:1px solid var(--line);background:var(--opt);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;max-width:520px}
+.opt{display:flex;align-items:center;gap:14px;border:1px solid transparent;background:var(--opt);border-radius:16px;padding:15px 18px;cursor:pointer;transition:border-color .2s,background .2s;max-width:520px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .opt:hover{background:var(--opt-hover)}
 .opt input{position:absolute;opacity:0;pointer-events:none}
-.key{flex:none;width:26px;height:26px;border:1px solid var(--line);border-radius:6px;display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.key{flex:none;width:26px;height:26px;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:500;color:var(--muted)}
 .opt:has(input:checked){border-color:var(--accent);background:var(--opt-hover)}
 .opt:has(input:checked) .key{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.opt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.opt:has(input:focus-visible){outline:3px solid rgba(31,94,143,.4);outline-offset:2px}
 
 label.f{display:block;font-size:14px;color:var(--muted);margin:0 0 4px}
-input.t{width:100%;max-width:520px;font:inherit;font-size:22px;padding:8px 0 10px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);margin-bottom:22px;border-radius:0}
-input.t::placeholder{color:rgba(237,241,245,.35)}
+input.t{width:100%;max-width:520px;font:inherit;font-size:22px;padding:8px 0 10px;border:0;border-bottom:1.5px solid var(--line);background:transparent;color:var(--ink);margin-bottom:22px;border-radius:0}
+input.t::placeholder{color:#A4A8AF}
 input.t:focus{outline:0;border-bottom-color:var(--accent)}
 
 .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:8px;padding:14px 26px;font:inherit;font-weight:600;font-size:16px;background:var(--accent);color:var(--accent-ink);cursor:pointer;text-decoration:none}
-.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:980px;padding:14px 28px;font:inherit;font-weight:500;font-size:17px;background:var(--accent);color:var(--accent-ink);cursor:pointer;text-decoration:none;transition:background .2s}
+.btn:hover{background:#174C75}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.btn:focus-visible{outline:3px solid rgba(31,94,143,.4);outline-offset:3px}
 .btn svg{width:18px;height:18px}
 .hint{font-size:13px;color:var(--muted)}
 .hint b{font-weight:600;color:var(--ink)}
@@ -83,15 +86,17 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
 .legal{font-size:12.5px;color:var(--muted);margin:0 0 18px;max-width:560px;line-height:1.55}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin-bottom:22px;max-width:520px;cursor:pointer}
 .check input{accent-color:var(--accent);width:18px;height:18px;margin-top:3px;flex:none}
-.link{background:none;border:0;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.link{background:none;border:0;color:var(--accent);font:inherit;font-size:14px;cursor:pointer}
 
-.nav{position:absolute;right:20px;bottom:20px;display:flex;gap:6px}
-.nav button{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:rgba(20,24,28,.6);color:var(--ink);cursor:pointer;font-size:16px}
-.nav button[disabled]{opacity:.3;cursor:default}
-.foot{padding:0 24px 18px;font-size:12px;color:var(--muted)}
+.nav{position:absolute;right:20px;bottom:20px;display:flex;gap:8px}
+.nav button{width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:var(--ink);cursor:pointer;font-size:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.nav button[disabled]{opacity:.35;cursor:default}
+.foot{padding:0 26px 20px;font-size:12px;color:var(--muted)}
 
 /* Dentro do site (iframe na seção #agendar) */
 .embed .stage{min-height:100vh}
+.embed .stage::before{display:none}
+.embed .stage::after{background:var(--bg)}
 .embed .foot{display:none}
 .embed .brand{visibility:hidden} /* dentro do site o cabeçalho já tem a marca */
 
@@ -100,7 +105,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
   .top{padding:16px 18px 0}
   form{padding:18px;align-items:flex-start;padding-top:8vh}
   .nav{right:14px;bottom:14px}
-  .opt{padding:13px 14px}
+  .opt{padding:14px 15px}
 }
 @media (prefers-reduced-motion:reduce){.step.on{animation:none}.progress span{transition:none}}
 </style>
@@ -116,8 +121,8 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
   <form id="f" novalidate>
     <!-- 0. Intro -->
     <section class="step on" data-step="0">
-      <p class="eyebrow">Membro Titular da SBCP</p>
-      <h1>Planeje sua cirurgia com a <em>Dra. Beatriz Ribas</em></h1>
+      <p class="eyebrow">Membro titular da SBCP</p>
+      <h1>Planeje sua cirurgia com a Dra. Beatriz Ribas</h1>
       <ul class="bul">
         <li>Cirurgiã plástica, Membro Titular da SBCP</li>
         <li>Avaliação individual e presencial do seu caso</li>
@@ -132,7 +137,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
 
     <!-- 1. Procedimento -->
     <section class="step" data-step="1">
-      <h2><span class="qn">1 →</span>Qual procedimento você está considerando?</h2>
+      <h2><span class="qn">1</span>Qual procedimento você está considerando?</h2>
       <div class="opts">
         <label class="opt"><input type="radio" name="procedimento" value="Prótese de silicone"><span class="key">A</span>Prótese de silicone</label>
         <label class="opt"><input type="radio" name="procedimento" value="Levantamento das mamas (com ou sem prótese)"><span class="key">B</span>Levantamento das mamas (com ou sem prótese)</label>
@@ -146,7 +151,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
 
     <!-- 2. Consulta anterior -->
     <section class="step" data-step="2">
-      <h2><span class="qn">2 →</span>Você já passou por consulta com outro cirurgião plástico para esse procedimento?</h2>
+      <h2><span class="qn">2</span>Você já passou por consulta com outro cirurgião plástico para esse procedimento?</h2>
       <div class="opts">
         <label class="opt"><input type="radio" name="consulta_anterior" value="Sim"><span class="key">A</span>Sim</label>
         <label class="opt"><input type="radio" name="consulta_anterior" value="Não"><span class="key">B</span>Não</label>
@@ -155,7 +160,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
 
     <!-- 3. Prazo -->
     <section class="step" data-step="3">
-      <h2><span class="qn">3 →</span>Quando você pretende realizar a cirurgia?</h2>
+      <h2><span class="qn">3</span>Quando você pretende realizar a cirurgia?</h2>
       <div class="opts">
         <label class="opt"><input type="radio" name="prazo" value="Nos próximos 3 meses"><span class="key">A</span>Nos próximos 3 meses</label>
         <label class="opt"><input type="radio" name="prazo" value="Entre 3 e 6 meses"><span class="key">B</span>Entre 3 e 6 meses</label>
@@ -166,7 +171,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
 
     <!-- 4. Nome -->
     <section class="step" data-step="4">
-      <h2><span class="qn">4 →</span>Qual o seu nome completo?</h2>
+      <h2><span class="qn">4</span>Qual o seu nome completo?</h2>
       <label class="f" for="nome">Nome e sobrenome</label>
       <input class="t" id="nome" name="nome" autocomplete="name" placeholder="Digite seu nome">
       <div class="err" id="e-nome">Informe seu nome e sobrenome.</div>
@@ -178,7 +183,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
 
     <!-- 5. Telefone + privacidade -->
     <section class="step" data-step="5">
-      <h2><span class="qn">5 →</span>Qual o seu WhatsApp?</h2>
+      <h2><span class="qn">5</span>Qual o seu WhatsApp?</h2>
       <p class="sub">Usaremos seu nome e telefone para entrar em contato pelo WhatsApp sobre o agendamento da sua consultoria cirúrgica.</p>
       <label class="f" for="telefone">Telefone com DDD</label>
       <input class="t" id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 90000-0000">
@@ -192,7 +197,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
     <!-- 6. Obrigado -->
     <section class="step" data-step="6">
       <p class="eyebrow">Tudo certo</p>
-      <h1>Recebemos suas <em>informações</em></h1>
+      <h1>Recebemos suas informações</h1>
       <p class="sub">A Yasmin, da equipe da Dra. Beatriz Ribas, vai te chamar no WhatsApp em horário comercial para entender o seu caso e combinar o melhor dia para a sua avaliação.</p>
       <p class="sub" style="opacity:.7">Fique de olho nas mensagens do número da clínica.</p>
     </section>
@@ -217,7 +222,7 @@ input.t:focus{outline:0;border-bottom-color:var(--accent)}
     <button type="button" id="prev" aria-label="Pergunta anterior">↑</button>
     <button type="button" id="next" aria-label="Próxima pergunta">↓</button>
   </div>
-  <div class="foot">Dra. Beatriz Ribas · Cirurgia Plástica · São Paulo e Santos</div>
+  <div class="foot">Dra. Beatriz Ribas, Cirurgia Plástica, São Paulo e Santos</div>
 </div>
 
 <script>

@@ -35,7 +35,7 @@
     if (!box) return;
     var st = document.createElement('style');
     st.textContent =
-      '#form-consultoria{position:relative;width:100%;height:min(100vh,860px);min-height:620px;border-radius:14px;overflow:hidden;background:#14181c}' +
+      '#form-consultoria{position:relative;width:100%;height:min(100vh,860px);min-height:620px;border-radius:28px;overflow:hidden;background:#F1F2F5}' +
       '#form-consultoria iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}' +
       '@media (max-width:600px){#form-consultoria{height:100svh;min-height:600px;border-radius:0;margin-left:calc(50% - 50vw);width:100vw}}';
     document.head.appendChild(st);

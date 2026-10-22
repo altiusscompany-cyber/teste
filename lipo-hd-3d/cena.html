@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Lipo HD 3D</title>
+<style>
+  html,body{margin:0;width:1280px;height:720px;overflow:hidden;font-family:Inter,"DejaVu Sans",sans-serif;
+    background:radial-gradient(ellipse at 50% 40%,#1d3347 0%,#0c1824 60%,#060d14 100%);color:#fff}
+  canvas{position:absolute;inset:0}
+  #cap{position:absolute;left:64px;bottom:56px;max-width:760px}
+  #step{font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:#7fd3ff;font-weight:600;margin-bottom:8px}
+  #title{font-size:44px;font-weight:700;line-height:1.05;margin-bottom:10px;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+  #sub{font-size:21px;line-height:1.4;color:#d6e4ef;text-shadow:0 1px 10px rgba(0,0,0,.7)}
+  #bar{width:56px;height:4px;background:#7fd3ff;border-radius:2px;margin-bottom:14px}
+  .lbl{position:absolute;font-size:16px;font-weight:600;color:#fff;white-space:nowrap;transform:translate(-100%,-50%);
+    padding-right:14px;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+  .lbl::after{content:"";position:absolute;right:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:#7fd3ff;box-shadow:0 0 8px #7fd3ff}
+  #card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:#071019;opacity:0}
+  #card h1{font-size:54px;margin:0 0 18px}
+  #card p{font-size:22px;color:#c7d6e2;max-width:820px;line-height:1.5;margin:6px 0}
+  #fade{position:absolute;inset:0;background:#000;opacity:0}
+  #wm{position:absolute;right:28px;top:22px;font-size:14px;letter-spacing:.18em;color:rgba(255,255,255,.55);font-weight:600}
+</style>
+</head>
+<body>
+<div id="labels"></div>
+<div id="cap"><div id="bar"></div><div id="step"></div><div id="title"></div><div id="sub"></div></div>
+<div id="wm">LIPO HD · ANIMAÇÃO 3D</div>
+<div id="card">
+  <h1>Lipo HD</h1>
+  <p>Conteúdo educativo e ilustrativo. Técnicas, indicação e resultados variam de pessoa para pessoa.</p>
+  <p>Procure sempre um cirurgião plástico qualificado (membro da SBCP).</p>
+</div>
+<div id="fade"></div>
+<script type="module">
+import * as THREE from './package/build/three.module.js';
+
+const W = 1280, H = 720;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, W / H, 0.05, 100);
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a2a26, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(2.5, 5, 3.5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x8fb8ff, 1.4); rim.position.set(-4, 2, -3); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffe2cc, 0.5); fill.position.set(-3, 0, 4); scene.add(fill);
+
+// ---------- helpers ----------
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ss = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+const g = (v, m, s) => Math.exp(-(((v - m) / s) ** 2));
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+function cr(pts, y) {
+  const n = pts.length;
+  if (y <= pts[0][0]) return pts[0][1];
+  if (y >= pts[n - 1][0]) return pts[n - 1][1];
+  let i = 0; while (pts[i + 1][0] < y) i++;
+  const t = (y - pts[i][0]) / (pts[i + 1][0] - pts[i][0]);
+  const v0 = pts[Math.max(0, i - 1)][1], v1 = pts[i][1], v2 = pts[i + 1][1], v3 = pts[Math.min(n - 1, i + 2)][1];
+  return 0.5 * (2 * v1 + (-v0 + v2) * t + (2 * v0 - 5 * v1 + 4 * v2 - v3) * t * t + (-v0 + 3 * v1 - 3 * v2 + v3) * t * t * t);
+}
+function segDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, t = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy));
+  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+}
+
+// ---------- torso (dress-form style) ----------
+const RX = [[-1.52,0],[-1.5,.3],[-1.43,.5],[-1.3,.6],[-1.1,.64],[-.85,.6],[-.55,.52],[-.25,.47],[.05,.48],[.35,.53],[.65,.58],[.95,.62],[1.12,.6],[1.25,.45],[1.33,.22],[1.4,.17],[1.7,.16],[1.76,.1],[1.78,0]];
+const RZ = [[-1.52,0],[-1.5,.22],[-1.43,.36],[-1.3,.42],[-1.1,.42],[-.85,.38],[-.55,.34],[-.25,.32],[.05,.33],[.35,.37],[.65,.4],[.95,.36],[1.12,.32],[1.25,.27],[1.33,.19],[1.4,.16],[1.7,.15],[1.76,.1],[1.78,0]];
+
+function disp(x, y, s, c, fat, def) {
+  const m = ss(-1.42, -1.2, y) * (1 - ss(1.0, 1.2, y));
+  const front = Math.max(0, c);
+  const side = Math.pow(Math.abs(s), 3);
+  let d = 0;
+  d += fat * 0.13 * g(y, -0.4, 0.38) * Math.pow(front, 1.5);
+  d += fat * 0.06 * g(y, -0.55, 0.3) * side;
+  d += fat * 0.025 * g(y, -0.3, 0.6);
+  d -= def * 0.02 * g(y, -0.35, 0.4) * side;
+  if (front > 0 && def > 0) {
+    const f2 = front * front, ax = Math.abs(x);
+    let e = 0;
+    const yA = ss(-0.8, -0.65, y) * (1 - ss(0.38, 0.5, y));
+    e -= 0.022 * g(x, 0, 0.026) * yA;
+    e -= 0.026 * g(ax, 0.28, 0.035) * ss(-0.65, -0.5, y) * (1 - ss(0.32, 0.45, y));
+    e -= 0.011 * (g(y, 0.28, 0.035) + g(y, 0.02, 0.035) + g(y, -0.26, 0.035)) * (1 - ss(0.22, 0.29, ax));
+    e += 0.01 * (1 - ss(0.2, 0.3, ax)) * yA;
+    e -= 0.022 * g(segDist(ax, y, 0.28, -0.58, 0.08, -1.0), 0, 0.035);
+    e -= 0.014 * g(y, 0.62 - 0.12 * (ax / 0.45) ** 2, 0.035) * (1 - ss(0.38, 0.5, ax));
+    e -= 0.01 * g(ax, 0.43, 0.05) * ss(-0.5, -0.3, y) * (1 - ss(0.2, 0.35, y));
+    d += def * e * f2;
+  }
+  d -= 0.03 * Math.exp(-((x / 0.03) ** 2 + ((y + 0.3) / 0.025) ** 2)) * front;
+  return d * m;
+}
+function torsoPoint(th, y, fat, def, off, out) {
+  const rx = Math.max(cr(RX, y), 0), rz = Math.max(cr(RZ, y), 0);
+  const s = Math.sin(th), c = Math.cos(th);
+  const x = rx * s, z = rz * c;
+  let nx = s * rz, nz = c * rx; const L = Math.hypot(nx, nz) || 1; nx /= L; nz /= L;
+  const d = disp(x, y, s, c, fat, def) + off;
+  return out.set(x + nx * d, y, z + nz * d);
+}
+function makeSurf(TH, YS, y0, y1) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((TH + 1) * (YS + 1) * 3), 3));
+  const idx = [];
+  for (let j = 0; j < YS; j++) for (let i = 0; i < TH; i++) {
+    const a = j * (TH + 1) + i, b = a + 1, c = a + TH + 1, d = c + 1;
+    idx.push(a, b, c, b, d, c);
+  }
+  geo.setIndex(idx);
+  return { geo, TH, YS, y0, y1, key: '' };
+}
+const tmp = new THREE.Vector3();
+function updateSurf(S, fat, def, off) {
+  const k = fat.toFixed(4) + def.toFixed(4);
+  if (S.key === k) return; S.key = k;
+  const p = S.geo.attributes.position.array; let n = 0;
+  for (let j = 0; j <= S.YS; j++) {
+    const y = S.y0 + (S.y1 - S.y0) * j / S.YS;
+    for (let i = 0; i <= S.TH; i++) {
+      torsoPoint(Math.PI + 2 * Math.PI * i / S.TH, y, fat, def, off, tmp);
+      p[n++] = tmp.x; p[n++] = tmp.y; p[n++] = tmp.z;
+    }
+  }
+  S.geo.attributes.position.needsUpdate = true;
+  S.geo.computeVertexNormals();
+}
+
+const torso = new THREE.Group(); scene.add(torso);
+const body = makeSurf(200, 260, -1.52, 1.78);
+const skinMat = new THREE.MeshPhysicalMaterial({ color: 0xd9a07f, roughness: 0.55, sheen: 0.4, sheenColor: 0xffc4a8, side: THREE.DoubleSide });
+torso.add(new THREE.Mesh(body.geo, skinMat));
+const metal = new THREE.MeshStandardMaterial({ color: 0xb8c2cc, metalness: 0.9, roughness: 0.25 });
+const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.3, 24), metal); pole.position.y = -2.15; torso.add(pole);
+const base = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 0.06, 48), metal); base.position.y = -2.8; torso.add(base);
+
+const garmentS = makeSurf(200, 120, -1.18, 0.55);
+const garmentMat = new THREE.MeshStandardMaterial({ color: 0x24242a, roughness: 0.85, transparent: true, opacity: 0, side: THREE.DoubleSide });
+const garment = new THREE.Mesh(garmentS.geo, garmentMat); torso.add(garment);
+
+function surfAt(u, y, off) {
+  const rx = cr(RX, y);
+  return torsoPoint(Math.asin(clamp(u / rx, -1, 1)), y, 1, 0, off, new THREE.Vector3());
+}
+const markMat = new THREE.MeshBasicMaterial({ color: 0x7b3fe4, transparent: true });
+const markMat2 = new THREE.MeshBasicMaterial({ color: 0x18a36b, transparent: true });
+const marks = [];
+function addMark(fn, n, closed, mat, t0) {
+  const pts = []; for (let i = 0; i <= n; i++) { const [u, y] = fn(i / n); pts.push(surfAt(u, y, 0.006)); }
+  const curve = new THREE.CatmullRomCurve3(pts, closed);
+  const geo = new THREE.TubeGeometry(curve, 160, 0.0055, 6, closed);
+  const m = new THREE.Mesh(geo, mat); torso.add(m); marks.push({ m, t0, total: geo.index.count });
+}
+let mt = 6.6;
+const next = d => (mt += d) - d;
+[[0.16, 0.1], [0.27, 0.19], [0.38, 0.27]].forEach(([a, b]) => addMark(f => [a * Math.cos(f * 2 * Math.PI), -0.42 + b * Math.sin(f * 2 * Math.PI)], 80, true, markMat2, next(0.55)));
+addMark(f => [0, lerp(0.45, -0.75, f)], 40, false, markMat, next(0.5));
+addMark(f => [0.28, lerp(0.4, -0.58, f)], 40, false, markMat, next(0.4));
+addMark(f => [-0.28, lerp(0.4, -0.58, f)], 40, false, markMat, next(0.4));
+[0.28, 0.02, -0.26].forEach(y => addMark(f => [lerp(-0.27, 0.27, f), y], 30, false, markMat, next(0.35)));
+addMark(f => [lerp(0.28, 0.08, f), lerp(-0.58, -1.0, f)], 20, false, markMat, next(0.35));
+addMark(f => [lerp(-0.28, -0.08, f), lerp(-0.58, -1.0, f)], 20, false, markMat, next(0.35));
+
+const incisions = [[0, -0.265], [0.12, -1.0], [-0.12, -1.0], [0.44, -0.78], [-0.44, -0.78]].map(([u, y], i) => {
+  const p = surfAt(u, y, 0.003);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a1c1c }));
+  dot.position.copy(p); torso.add(dot);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.022, 0.03, 40), new THREE.MeshBasicMaterial({ color: 0x9fe3ff, transparent: true, side: THREE.DoubleSide }));
+  ring.position.copy(surfAt(u, y, 0.01));
+  const th = Math.asin(clamp(u / cr(RX, y), -1, 1));
+  ring.lookAt(ring.position.clone().add(new THREE.Vector3(Math.sin(th), 0, Math.cos(th))));
+  torso.add(ring);
+  return { dot, ring, t0: 13.6 + i * 0.35 };
+});
+
+// ---------- tissue block (cross-section) ----------
+const block = new THREE.Group(); scene.add(block);
+const XL = 1.6, ZF = 0.8;
+const muscleTop = x => -0.27 + 0.11 * (g(x, -0.5, 0.36) + g(x, 0.5, 0.36)) + 0.06 * g(Math.abs(x), 1.4, 0.28);
+const Tf = x => 0.08 + 0.05 * (g(x, -0.5, 0.28) + g(x, 0.5, 0.28)) + 0.08 * ss(1.05, 1.35, Math.abs(x));
+const T0 = 0.9;
+
+const NB = 128, FPS = 30;
+const binX = b => -XL + 2 * XL * b / (NB - 1);
+function toolX(t, t0, t1, k) {
+  const u = (t - t0) / (t1 - t0);
+  if (u <= 0.08) return lerp(2.7, 1.25, ease(clamp(u / 0.08)));
+  if (u >= 0.92) return lerp(1.25, 2.7, ease(clamp((u - 0.92) / 0.08)));
+  return -0.1 + 1.35 * Math.cos(2 * Math.PI * k * (u - 0.08) / 0.84);
+}
+function phase(t0, t1, k, width) {
+  const n = Math.ceil((t1 - t0) * FPS) + 1, frames = [], acc = new Float32Array(NB);
+  for (let f = 0; f < n; f++) {
+    const t = t0 + f / FPS, u = (t - t0) / (t1 - t0);
+    if (u > 0.08 && u < 0.92) { const tx = toolX(t, t0, t1, k); for (let b = 0; b < NB; b++) acc[b] += g(binX(b), tx, width) / FPS; }
+    frames.push(Float32Array.from(acc));
+  }
+  const fin = frames[n - 1];
+  for (const fr of frames) for (let b = 0; b < NB; b++) fr[b] = clamp(fr[b] / Math.max(fin[b], 1e-6));
+  return { t0, t1, k, frames };
+}
+function prog(P, t, x) {
+  if (t <= P.t0) return 0; if (t >= P.t1) return 1;
+  const fr = P.frames[Math.min(P.frames.length - 1, Math.floor((t - P.t0) * FPS))];
+  const b = clamp((x + XL) / (2 * XL)) * (NB - 1), i = Math.floor(b), fz = b - i;
+  return lerp(fr[i], fr[Math.min(NB - 1, i + 1)], fz);
+}
+const INF = phase(18.6, 25.6, 3, 0.45), VAS = phase(26.4, 32.8, 4, 0.4), ASP = phase(33.4, 44.8, 7, 0.32);
+const swell = (x, t) => 1 + 0.07 * prog(INF, t, x);
+const fatT = (x, t) => lerp(T0 * swell(x, t), Tf(x), ease(prog(ASP, t, x)));
+
+function deformBox(w, d, segs, mat) {
+  const geo = new THREE.BoxGeometry(w, 1, d, segs, 1, 1);
+  const p = geo.attributes.position;
+  const top = new Uint8Array(p.count), xs = new Float32Array(p.count);
+  for (let i = 0; i < p.count; i++) { top[i] = p.getY(i) > 0 ? 1 : 0; xs[i] = p.getX(i); }
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.userData.set = (bot, tp) => {
+    for (let i = 0; i < p.count; i++) p.setY(i, top[i] ? tp(xs[i]) : bot(xs[i]));
+    p.needsUpdate = true; geo.computeVertexNormals();
+  };
+  return mesh;
+}
+function cellTex(base, line, n) {
+  const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d');
+  x.fillStyle = base; x.fillRect(0, 0, 512, 512); x.strokeStyle = line; x.lineWidth = 2;
+  for (let i = 0; i < n; i++) { const cx = rnd() * 512, cy = rnd() * 512, r = 10 + rnd() * 18; x.beginPath(); x.ellipse(cx, cy, r, r * (0.7 + rnd() * 0.5), rnd() * 3, 0, 7); x.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+const muscleMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: cellTex('#a3343c', '#6e1d24', 520), roughness: 0.6 });
+const fatMat = new THREE.MeshStandardMaterial({ color: 0xe8b94a, roughness: 0.65 });
+const dermMat = new THREE.MeshPhysicalMaterial({ color: 0xdea183, roughness: 0.5, sheen: 0.4, sheenColor: 0xffc4a8 });
+const muscle = deformBox(2 * XL, 2 * ZF, 128, muscleMat), fat = deformBox(2 * XL, 2 * ZF, 128, fatMat), skin = deformBox(2 * XL, 2 * ZF, 128, dermMat);
+block.add(muscle, fat, skin);
+muscle.userData.set(() => -0.95, muscleTop);
+
+const lob = [];
+for (let x = -1.53; x <= 1.53; x += 0.105) for (let h = 0.07; h < T0 - 0.06; h += 0.1) {
+  const r = 0.048 + 0.018 * rnd();
+  lob.push({ x: x + (rnd() - 0.5) * 0.05, h: h + (rnd() - 0.5) * 0.04, r, tr: Infinity, j: rnd() * 6.28 });
+}
+for (const L of lob) for (let f = 0; f < ASP.frames.length; f++) {
+  const t = ASP.t0 + f / FPS; if (fatT(L.x, t) < L.h + 0.6 * L.r) { L.tr = t; break; }
+}
+const lobMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.45 }), lob.length);
+block.add(lobMesh);
+
+function tool(r, len, color, rough) {
+  const grp = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color, metalness: 0.85, roughness: rough });
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 24), mat); shaft.rotation.z = Math.PI / 2; shaft.position.x = len / 2; grp.add(shaft);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), mat); grp.add(tip);
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(r * 2.6, r * 2.6, 1.2, 24), new THREE.MeshStandardMaterial({ color: 0x3c4650, metalness: 0.4, roughness: 0.5 }));
+  handle.rotation.z = Math.PI / 2; handle.position.x = len + 0.6; grp.add(handle);
+  block.add(grp); return grp;
+}
+const infTool = tool(0.016, 1.8, 0xd0d8e0, 0.3);
+const vasTool = tool(0.02, 1.8, 0xc9ced6, 0.2);
+for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.TorusGeometry(0.021, 0.006, 8, 24), metal); b.rotation.y = Math.PI / 2; b.position.x = 0.04 + i * 0.035; vasTool.add(b); }
+const vasGlow = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 12), new THREE.MeshBasicMaterial({ color: 0x9ff3ff, transparent: true, opacity: 0.8 })); vasTool.add(vasGlow);
+const rings = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.006, 8, 48), new THREE.MeshBasicMaterial({ color: 0x8fe9ff, transparent: true })); m.rotation.y = Math.PI / 2; vasTool.add(m); return m; });
+const aspTool = tool(0.034, 1.8, 0xd5dbe2, 0.25);
+for (let i = 0; i < 3; i++) { const hole = new THREE.Mesh(new THREE.SphereGeometry(0.014, 12, 8), new THREE.MeshBasicMaterial({ color: 0x111111 })); hole.position.set(0.07 + i * 0.06, 0.012, 0.03); hole.scale.z = 0.4; aspTool.add(hole); }
+
+const drops = [];
+for (let i = 0; i < 220; i++) drops.push({ ts: lerp(INF.t0 + 0.6, INF.t1 - 0.6, i / 220), a: rnd() * 6.28, sp: 0.06 + rnd() * 0.12, r: 0.012 + rnd() * 0.02 });
+const dropMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshStandardMaterial({ color: 0x4fb0ff, emissive: 0x1a5aa0, transparent: true, opacity: 0.75, roughness: 0.2 }), drops.length);
+block.add(dropMesh);
+
+function toolY(t, P) {
+  if (P === ASP) { const mean = fatT(0.5, t); return muscleTop(0.5) + lerp(0.4, 0.62, ss(38.5, 39.5, t)) * mean - 0.02; }
+  return muscleTop(0.5) + 0.5 * T0;
+}
+const toolPos = (t, P) => new THREE.Vector3(toolX(t, P.t0, P.t1, P.k), toolY(t, P), ZF - 0.01);
+
+// ---------- captions & labels ----------
+const CAP = [
+  [0.4, 6, '', 'Lipo HD', 'Lipoescultura de alta definição: como o procedimento é feito, em 3D'],
+  [6.2, 13.2, 'Etapa 1', 'Marcação', 'Com o paciente em pé, o cirurgião desenha os contornos musculares e as áreas de gordura'],
+  [13.4, 17.4, 'Etapa 2', 'Microincisões', 'Cortes de 3 a 5 mm em locais discretos: umbigo, região púbica e flancos'],
+  [18.4, 26, 'Etapa 3', 'Infiltração tumescente', 'Soro com anestésico e adrenalina: reduz o sangramento e facilita a retirada da gordura'],
+  [26.2, 33, 'Etapa 4', 'Ultrassom (VASER)', 'A energia ultrassônica emulsifica a gordura, preservando vasos e nervos'],
+  [33.2, 39, 'Etapa 5', 'Lipoaspiração profunda', 'Cânulas finas, em movimentos de vaivém, retiram o volume da camada profunda'],
+  [39.1, 45, 'Etapa 5', 'Escultura superficial', 'Retirada seletiva sobre as linhas musculares (etching) para criar sombras e relevo'],
+  [45.2, 48.6, '', 'Acomodação da pele', 'A pele se retrai sobre o músculo e revela o contorno'],
+  [49.4, 56, 'Resultado', 'Contorno definido', 'Reto abdominal, linha alba e linhas semilunares evidenciados'],
+  [56.2, 61, 'Etapa 6', 'Pós-operatório', 'Cinta compressiva, drenagem linfática e retorno gradual às atividades'],
+];
+const $ = id => document.getElementById(id);
+const labelsEl = $('labels');
+const LBL = ['Pele', 'Gordura subcutânea', 'Músculo reto abdominal', 'Linha alba'].map(s => { const d = document.createElement('div'); d.className = 'lbl'; d.textContent = s; labelsEl.appendChild(d); return d; });
+function placeLabel(el, v, op) {
+  const p = v.clone().project(camera);
+  el.style.left = ((p.x + 1) / 2 * W) + 'px'; el.style.top = ((1 - p.y) / 2 * H) + 'px'; el.style.opacity = op;
+}
+
+const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S3 = new THREE.Vector3(), P3 = new THREE.Vector3(), C = new THREE.Color();
+const cYellow = new THREE.Color(0xf2c552), cPale = new THREE.Color(0xfff0c4), cBlue = new THREE.Color(0xd9d08a);
+
+window.renderAt = function (t) {
+  // captions
+  let cap = null; for (const c of CAP) if (t >= c[0] && t <= c[1]) cap = c;
+  if (cap) {
+    const op = Math.min(ss(cap[0], cap[0] + 0.5, t), 1 - ss(cap[1] - 0.4, cap[1], t));
+    $('step').textContent = cap[2]; $('title').textContent = cap[3]; $('sub').textContent = cap[4];
+    $('cap').style.opacity = op; $('cap').style.transform = `translateY(${(1 - op) * 12}px)`;
+  } else $('cap').style.opacity = 0;
+  $('fade').style.opacity = Math.max(1 - ss(0, 0.6, t), ss(17.2, 17.7, t) * (1 - ss(18, 18.5, t)), ss(48.6, 49.0, t) * (1 - ss(49.2, 49.7, t)));
+  $('card').style.opacity = ss(61, 61.8, t);
+  $('wm').style.opacity = 1 - ss(61, 61.8, t);
+
+  const inBlock = t >= 17.7 && t < 49.1;
+  torso.visible = !inBlock; block.visible = inBlock;
+  LBL.forEach(l => l.style.opacity = 0);
+
+  if (!inBlock) {
+    const morph = ease(ss(50, 54.5, t));
+    updateSurf(body, 1 - morph, morph, 0);
+    const gop = ss(56.6, 58, t);
+    garment.visible = gop > 0; garmentMat.opacity = gop * 0.96;
+    if (gop > 0) updateSurf(garmentS, 1 - morph, morph * 0.4, 0.016);
+    for (const mk of marks) {
+      const p = ss(mk.t0, mk.t0 + 0.8, t);
+      mk.m.visible = p > 0 && t < 48;
+      mk.m.geometry.setDrawRange(0, Math.floor(p * mk.total / 36) * 36);
+    }
+    for (const ic of incisions) {
+      const on = t >= ic.t0 && t < 48;
+      ic.dot.visible = on; ic.ring.visible = on && t < 17.6;
+      const ph = ((t - ic.t0) * 1.2) % 1; ic.ring.scale.setScalar(1 + ph * 1.6); ic.ring.material.opacity = 1 - ph;
+    }
+    let ang, r, h, ly, lx = 0;
+    if (t < 6.4) { const u = ease(ss(0, 6.4, t)); ang = lerp(0.9, 0.12, u); r = lerp(6.4, 5.4, u); h = 0.3; ly = 0.05; }
+    else if (t < 18) { const u = ease(ss(6.0, 8.0, t)); ang = lerp(0.12, 0.18 - 0.08 * ss(8, 17, t), u); r = lerp(5.4, 2.7, u); h = lerp(0.3, -0.05, u); ly = lerp(0.05, -0.22, u); lx = 0.3 * u; }
+    else { const u = ss(49, 61, t); ang = lerp(-0.55, 0.6, u); r = lerp(3.3, 3.6, u); h = 0.0; ly = -0.25; lx = 0.38; }
+    camera.position.set(Math.sin(ang) * r, h, Math.cos(ang) * r); camera.lookAt(lx, ly, 0);
+  } else {
+    // tissue layers
+    const top = x => muscleTop(x) + fatT(x, t);
+    fat.userData.set(muscleTop, top);
+    skin.userData.set(top, x => top(x) + 0.07);
+    const inf = ss(INF.t0, INF.t1, t);
+    fatMat.color.setHex(0xe8b94a).lerp(new THREE.Color(0xd6c27c), 0.5 * inf * (1 - ss(40, 46, t)));
+
+    const vasOn = t > VAS.t0 && t < VAS.t1;
+    const vasTip = vasOn ? toolPos(t, VAS) : null;
+    const aspTip = toolPos(Math.min(Math.max(t, ASP.t0), ASP.t1), ASP);
+    for (let i = 0; i < lob.length; i++) {
+      const L = lob[i], mt0 = muscleTop(L.x), sw = swell(L.x, t);
+      P3.set(L.x, mt0 + L.h * sw + L.r * 0.2, ZF - L.r * 0.35);
+      let s = L.r;
+      const em = prog(VAS, t, L.x);
+      if (vasTip) { const near = g(L.x - vasTip.x, 0, 0.35); P3.x += Math.sin(t * 40 + L.j) * 0.008 * near; P3.y += Math.cos(t * 37 + L.j) * 0.008 * near; }
+      if (t > L.tr) { const k = clamp((t - L.tr) / 0.45); P3.lerp(aspTip, ease(k)); s *= 1 - k; }
+      s *= 1 - 0.18 * em;
+      S3.setScalar(Math.max(s, 1e-5)); M4.compose(P3, Q, S3); lobMesh.setMatrixAt(i, M4);
+      C.copy(cYellow).lerp(cBlue, 0.35 * prog(INF, t, L.x)).lerp(cPale, 0.75 * em); lobMesh.setColorAt(i, C);
+    }
+    lobMesh.instanceMatrix.needsUpdate = true; lobMesh.instanceColor.needsUpdate = true;
+
+    for (let i = 0; i < drops.length; i++) {
+      const D = drops[i], age = t - D.ts;
+      if (age < 0 || age > 2.2) { S3.setScalar(1e-5); M4.compose(P3.set(0, -5, 0), Q, S3); }
+      else {
+        const p0 = toolPos(D.ts, INF), k = age / 2.2;
+        P3.set(p0.x + Math.cos(D.a) * D.sp * Math.sqrt(k) * 2, p0.y + Math.sin(D.a) * D.sp * Math.sqrt(k) * 1.6, ZF - 0.005);
+        S3.setScalar(D.r * Math.sin(Math.PI * Math.min(1, k * 1.3)) + 1e-5); M4.compose(P3, Q, S3);
+      }
+      dropMesh.setMatrixAt(i, M4);
+    }
+    dropMesh.instanceMatrix.needsUpdate = true;
+
+    infTool.visible = t > INF.t0 && t < INF.t1; if (infTool.visible) infTool.position.copy(toolPos(t, INF));
+    vasTool.visible = vasOn; if (vasOn) {
+      vasTool.position.copy(vasTip);
+      rings.forEach((m, i) => { const ph = (t * 1.6 + i / 3) % 1; m.scale.setScalar(0.4 + ph * 2.2); m.material.opacity = (1 - ph) * 0.9; });
+      vasGlow.material.opacity = 0.5 + 0.4 * Math.sin(t * 30);
+    }
+    aspTool.visible = t > ASP.t0 && t < ASP.t1; if (aspTool.visible) aspTool.position.copy(toolPos(t, ASP));
+
+    const u = ss(17.7, 49, t);
+    const zoom = ss(33, 36, t) * (1 - ss(44.5, 46.5, t));
+    camera.position.set(lerp(2.7, 1.5, u) - 0.5 * zoom, lerp(1.45, 1.1, u) - 0.25 * zoom, lerp(3.7, 3.4, u) - 0.7 * zoom);
+    camera.lookAt(lerp(0, 0.1, u), -0.12 - 0.05 * zoom, 0.35);
+    const lop = Math.min(ss(18.6, 19.4, t), 1 - ss(48.2, 48.8, t)) * (1 - 0.85 * ss(33, 34, t) * (1 - ss(44.6, 45.4, t)));
+    placeLabel(LBL[0], new THREE.Vector3(-1.1, top(-1.1) + 0.035, ZF), lop);
+    placeLabel(LBL[1], new THREE.Vector3(-1.1, muscleTop(-1.1) + 0.5 * fatT(-1.1, t), ZF), lop);
+    placeLabel(LBL[2], new THREE.Vector3(-1.1, -0.6, ZF), lop);
+    placeLabel(LBL[3], new THREE.Vector3(0, top(0) + 0.075, ZF), ss(45.4, 46.2, t) * (1 - ss(48.2, 48.8, t)));
+    LBL[3].style.transform = 'translate(-50%,-140%)';
+  }
+  renderer.render(scene, camera);
+  return true;
+};
+window.ready = true;
+</script>
+</body>
+</html>

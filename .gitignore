@@ -1,0 +1,4 @@
+# Vídeos brutos e renderizados ficam fora do git
+edicao/*.mp4
+edicao/*.mov
+edicao/*.MOV
